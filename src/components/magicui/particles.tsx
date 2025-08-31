@@ -1,15 +1,20 @@
-"use client";;
-import { cn } from "@/lib/utils";
+"use client";
+
 import React, { useEffect, useRef, useState } from "react";
 
-function MousePosition() {
-  const [mousePosition, setMousePosition] = useState({
+interface MousePosition {
+  x: number;
+  y: number;
+}
+
+function MousePosition(): MousePosition {
+  const [mousePosition, setMousePosition] = useState<MousePosition>({
     x: 0,
     y: 0,
   });
 
   useEffect(() => {
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (event: MouseEvent) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
     };
 
@@ -23,16 +28,19 @@ function MousePosition() {
   return mousePosition;
 }
 
-function hexToRgb(hex) {
+interface ParticlesProps {
+  className?: string;
+  quantity?: number;
+  staticity?: number;
+  ease?: number;
+  size?: number;
+  refresh?: boolean;
+  color?: string;
+  vx?: number;
+  vy?: number;
+}
+function hexToRgb(hex: string): number[] {
   hex = hex.replace("#", "");
-
-  if (hex.length === 3) {
-    hex = hex
-      .split("")
-      .map((char) => char + char)
-      .join("");
-  }
-
   const hexInt = parseInt(hex, 16);
   const red = (hexInt >> 16) & 255;
   const green = (hexInt >> 8) & 255;
@@ -40,7 +48,7 @@ function hexToRgb(hex) {
   return [red, green, blue];
 }
 
-export const Particles = ({
+const Particles: React.FC<ParticlesProps> = ({
   className = "",
   quantity = 100,
   staticity = 50,
@@ -50,18 +58,15 @@ export const Particles = ({
   color = "#ffffff",
   vx = 0,
   vy = 0,
-  ...props
 }) => {
-  const canvasRef = useRef(null);
-  const canvasContainerRef = useRef(null);
-  const context = useRef(null);
-  const circles = useRef([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const context = useRef<CanvasRenderingContext2D | null>(null);
+  const circles = useRef<any[]>([]);
   const mousePosition = MousePosition();
-  const mouse = useRef({ x: 0, y: 0 });
-  const canvasSize = useRef({ w: 0, h: 0 });
+  const mouse = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const canvasSize = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
   const dpr = typeof window !== "undefined" ? window.devicePixelRatio : 1;
-  const rafID = useRef(null);
-  const resizeTimeout = useRef(null);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -69,26 +74,10 @@ export const Particles = ({
     }
     initCanvas();
     animate();
-
-    const handleResize = () => {
-      if (resizeTimeout.current) {
-        clearTimeout(resizeTimeout.current);
-      }
-      resizeTimeout.current = setTimeout(() => {
-        initCanvas();
-      }, 200);
-    };
-
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", initCanvas);
 
     return () => {
-      if (rafID.current != null) {
-        window.cancelAnimationFrame(rafID.current);
-      }
-      if (resizeTimeout.current) {
-        clearTimeout(resizeTimeout.current);
-      }
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", initCanvas);
     };
   }, [color]);
 
@@ -119,27 +108,33 @@ export const Particles = ({
     }
   };
 
+  type Circle = {
+    x: number;
+    y: number;
+    translateX: number;
+    translateY: number;
+    size: number;
+    alpha: number;
+    targetAlpha: number;
+    dx: number;
+    dy: number;
+    magnetism: number;
+  };
+
   const resizeCanvas = () => {
     if (canvasContainerRef.current && canvasRef.current && context.current) {
+      circles.current.length = 0;
       canvasSize.current.w = canvasContainerRef.current.offsetWidth;
       canvasSize.current.h = canvasContainerRef.current.offsetHeight;
-
       canvasRef.current.width = canvasSize.current.w * dpr;
       canvasRef.current.height = canvasSize.current.h * dpr;
       canvasRef.current.style.width = `${canvasSize.current.w}px`;
       canvasRef.current.style.height = `${canvasSize.current.h}px`;
       context.current.scale(dpr, dpr);
-
-      // Clear existing particles and create new ones with exact quantity
-      circles.current = [];
-      for (let i = 0; i < quantity; i++) {
-        const circle = circleParams();
-        drawCircle(circle);
-      }
     }
   };
 
-  const circleParams = () => {
+  const circleParams = (): Circle => {
     const x = Math.floor(Math.random() * canvasSize.current.w);
     const y = Math.floor(Math.random() * canvasSize.current.h);
     const translateX = 0;
@@ -166,7 +161,7 @@ export const Particles = ({
 
   const rgb = hexToRgb(color);
 
-  const drawCircle = (circle, update = false) => {
+  const drawCircle = (circle: Circle, update = false) => {
     if (context.current) {
       const { x, y, translateX, translateY, size, alpha } = circle;
       context.current.translate(translateX, translateY);
@@ -184,7 +179,12 @@ export const Particles = ({
 
   const clearContext = () => {
     if (context.current) {
-      context.current.clearRect(0, 0, canvasSize.current.w, canvasSize.current.h);
+      context.current.clearRect(
+        0,
+        0,
+        canvasSize.current.w,
+        canvasSize.current.h,
+      );
     }
   };
 
@@ -197,7 +197,13 @@ export const Particles = ({
     }
   };
 
-  const remapValue = (value, start1, end1, start2, end2) => {
+  const remapValue = (
+    value: number,
+    start1: number,
+    end1: number,
+    start2: number,
+    end2: number,
+  ): number => {
     const remapped =
       ((value - start1) * (end2 - start2)) / (end1 - start1) + start2;
     return remapped > 0 ? remapped : 0;
@@ -205,7 +211,7 @@ export const Particles = ({
 
   const animate = () => {
     clearContext();
-    circles.current.forEach((circle, i) => {
+    circles.current.forEach((circle: Circle, i: number) => {
       // Handle the alpha value
       const edge = [
         circle.x + circle.translateX - circle.size, // distance from left edge
@@ -214,7 +220,9 @@ export const Particles = ({
         canvasSize.current.h - circle.y - circle.translateY - circle.size, // distance from bottom edge
       ];
       const closestEdge = edge.reduce((a, b) => Math.min(a, b));
-      const remapClosestEdge = parseFloat(remapValue(closestEdge, 0, 20, 0, 1).toFixed(2));
+      const remapClosestEdge = parseFloat(
+        remapValue(closestEdge, 0, 20, 0, 1).toFixed(2),
+      );
       if (remapClosestEdge > 1) {
         circle.alpha += 0.02;
         if (circle.alpha > circle.targetAlpha) {
@@ -246,18 +254,17 @@ export const Particles = ({
         // create a new circle
         const newCircle = circleParams();
         drawCircle(newCircle);
+        // update the circle position
       }
     });
-    rafID.current = window.requestAnimationFrame(animate);
+    window.requestAnimationFrame(animate);
   };
 
   return (
-    <div
-      className={cn("pointer-events-none", className)}
-      ref={canvasContainerRef}
-      aria-hidden="true"
-      {...props}>
-      <canvas ref={canvasRef} className="size-full" />
+    <div className={className} ref={canvasContainerRef} aria-hidden="true">
+      <canvas ref={canvasRef} className="h-full w-full" />
     </div>
   );
 };
+
+export default Particles;

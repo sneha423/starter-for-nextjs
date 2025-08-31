@@ -1,10 +1,10 @@
-import { databases } from "@/lib/appwrite";
-import { answerCollection } from "@/models/name";
+import { databases } from "../../../lib/appwrite";
+import { answerCollection } from "../../../models/name";
 import { NextRequest, NextResponse } from "next/server";
 import { ID } from "node-appwrite";
-import { db } from "@/models/name";
-import { UserPrefs } from "@/store/auth";
-import { users } from "@/models/server/config";
+import { db } from "../../../models/name";
+import { UserPrefs } from "../../../store/auth";
+import { users } from "../../../models/server/config";
 export async function POST(request: NextRequest) {
   try {
     const { questionId, answer, authorId } = await request.json();

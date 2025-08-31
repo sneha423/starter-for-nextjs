@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "../store/auth";
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const { session } = useAuthStore();
   const router = useRouter();

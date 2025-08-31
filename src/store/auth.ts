@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { AppwriteException, ID, Models } from "appwrite";
-import { account } from "@/models/client/config";
+import { account } from "..//models/client/config";
 
 export interface UserPrefs {
   reputation: number;

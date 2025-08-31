@@ -1,111 +1,146 @@
 "use client";
-import React, { useState, JSX } from "react";
+import React from "react";
 import {
   motion,
-  AnimatePresence,
   useScroll,
-  useMotionValueEvent,
+  useTransform,
+  useSpring,
+  MotionValue,
 } from "framer-motion";
-import { cn } from "../../lib/utils";
+import Image from "next/image";
 import Link from "next/link";
-import { useAuthStore } from "../../store/auth";
 
-export const FloatingNav = ({
-  navItems,
-  className,
+export const HeroParallax = ({
+  products,
+  header,
 }: {
-  navItems: {
-    name: string;
+  header: React.ReactNode;
+  products: {
+    title: string;
     link: string;
-    icon?: JSX.Element;
+    thumbnail: string;
   }[];
-  className?: string;
 }) => {
-  const { scrollYProgress, scrollY } = useScroll();
-
-  const { session, logout } = useAuthStore();
-
-  const [visible, setVisible] = useState(true);
-
-  useMotionValueEvent(scrollYProgress, "change", (current) => {
-    // Check if current is not undefined and is a number
-    if (scrollY.get()! === 0) {
-      setVisible(true);
-      return;
-    }
-    if (typeof current === "number") {
-      let direction = current! - scrollYProgress.getPrevious()!;
-
-      if (scrollYProgress.get() < 0.05) {
-        setVisible(false);
-      } else {
-        if (direction < 0) {
-          setVisible(true);
-        } else {
-          setVisible(false);
-        }
-      }
-    }
+  const firstRow = products.slice(0, 5);
+  const secondRow = products.slice(5, 10);
+  const thirdRow = products.slice(10, 15);
+  const ref = React.useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
   });
 
+  const springConfig = { stiffness: 300, damping: 30, bounce: 100 };
+
+  const translateX = useSpring(
+    useTransform(scrollYProgress, [0, 1], [0, 1000]),
+    springConfig,
+  );
+  const translateXReverse = useSpring(
+    useTransform(scrollYProgress, [0, 1], [0, -1000]),
+    springConfig,
+  );
+  const rotateX = useSpring(
+    useTransform(scrollYProgress, [0, 0.2], [15, 0]),
+    springConfig,
+  );
+  const opacity = useSpring(
+    useTransform(scrollYProgress, [0, 0.2], [0.2, 1]),
+    springConfig,
+  );
+  const rotateZ = useSpring(
+    useTransform(scrollYProgress, [0, 0.2], [20, 0]),
+    springConfig,
+  );
+  const translateY = useSpring(
+    useTransform(scrollYProgress, [0, 0.2], [-700, 500]),
+    springConfig,
+  );
   return (
-    <AnimatePresence mode="wait">
+    <div
+      ref={ref}
+      className="relative flex h-[300vh] flex-col self-auto overflow-hidden py-40 antialiased [perspective:1000px] [transform-style:preserve-3d]"
+    >
+      {header}
       <motion.div
-        initial={{
-          opacity: 1,
-          y: -100,
+        style={{
+          rotateX,
+          rotateZ,
+          translateY,
+          opacity,
         }}
-        animate={{
-          y: visible ? 0 : -100,
-          opacity: visible ? 1 : 0,
-        }}
-        transition={{
-          duration: 0.2,
-        }}
-        className={cn(
-          "fixed inset-x-0 top-10 z-50 mx-auto flex max-w-fit items-center justify-center space-x-4 rounded-full border border-transparent bg-white py-2 pr-2 pl-8 shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] dark:border-white/[0.2] dark:bg-black",
-          className,
-        )}
+        className=""
       >
-        {navItems.map((navItem: any, idx: number) => (
-          <Link
-            key={`link=${idx}`}
-            href={navItem.link}
-            className={cn(
-              "relative flex items-center space-x-1 text-neutral-600 hover:text-neutral-500 dark:text-neutral-50 dark:hover:text-neutral-300",
-            )}
-          >
-            <span className="block sm:hidden">{navItem.icon}</span>
-            <span className="hidden text-sm sm:block">{navItem.name}</span>
-          </Link>
-        ))}
-        {session ? (
-          <button
-            onClick={logout}
-            className="relative rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-black dark:border-white/[0.2] dark:text-white"
-          >
-            <span>Logout</span>
-            <span className="absolute inset-x-0 -bottom-px mx-auto h-px w-1/2 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
-          </button>
-        ) : (
-          <>
-            <Link
-              href="/login"
-              className="relative rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-black dark:border-white/[0.2] dark:text-white"
-            >
-              <span>Login</span>
-              <span className="absolute inset-x-0 -bottom-px mx-auto h-px w-1/2 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
-            </Link>
-            <Link
-              href="/register"
-              className="relative rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-black dark:border-white/[0.2] dark:text-white"
-            >
-              <span>Signup</span>
-              <span className="absolute inset-x-0 -bottom-px mx-auto h-px w-1/2 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
-            </Link>
-          </>
-        )}
+        <motion.div className="mb-20 flex flex-row-reverse space-x-20 space-x-reverse">
+          {firstRow.map((product) => (
+            <ProductCard
+              product={product}
+              translate={translateX}
+              key={product.title}
+            />
+          ))}
+        </motion.div>
+        <motion.div className="mb-20 flex flex-row space-x-20">
+          {secondRow.map((product) => (
+            <ProductCard
+              product={product}
+              translate={translateXReverse}
+              key={product.title}
+            />
+          ))}
+        </motion.div>
+        <motion.div className="flex flex-row-reverse space-x-20 space-x-reverse">
+          {thirdRow.map((product) => (
+            <ProductCard
+              product={product}
+              translate={translateX}
+              key={product.title}
+            />
+          ))}
+        </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </div>
+  );
+};
+
+export const ProductCard = ({
+  product,
+  translate,
+}: {
+  product: {
+    title: string;
+    link: string;
+    thumbnail: string;
+  };
+  translate: MotionValue<number>;
+}) => {
+  return (
+    <motion.div
+      style={{
+        x: translate,
+      }}
+      whileHover={{
+        y: -20,
+      }}
+      key={product.title}
+      className="group/product relative h-96 w-[30rem] flex-shrink-0"
+    >
+      <Link
+        href={product.link}
+        className="block group-hover/product:shadow-2xl"
+      >
+        <Image
+          src={product.thumbnail}
+          height="600"
+          width="600"
+          className="absolute inset-0 h-full w-full object-cover object-left-top"
+          alt={product.title}
+        />
+      </Link>
+      <div className="pointer-events-none absolute inset-0 h-full w-full bg-black opacity-0 group-hover/product:opacity-80"></div>
+      <h2 className="absolute bottom-4 left-4 text-white opacity-0 group-hover/product:opacity-100">
+        {product.title}
+      </h2>
+    </motion.div>
   );
 };

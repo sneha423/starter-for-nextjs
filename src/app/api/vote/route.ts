@@ -1,9 +1,9 @@
-import { databases, users } from "@/models/server/config";
+import { databases, users } from "../../../models/server/config";
 import { NextRequest, NextResponse } from "next/server";
-import { answerCollection, db, questionCollection } from "@/models/name";
-import { votecollection } from "@/models/name";
+import { answerCollection, db, questionCollection } from "../../../models/name";
+import { votecollection } from "../../../models/name";
 import { Query, ID } from "node-appwrite";
-import { UserPrefs } from "@/store/auth";
+import { UserPrefs } from "../../../store/auth";
 
 export async function POST(request: NextRequest) {
   try {
